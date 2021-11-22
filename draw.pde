@@ -1,85 +1,64 @@
-
-//********************************************************************
-// The following code is required to enable bluetooth at startup.
-//********************************************************************
-void onCreate(Bundle savedInstanceState) {
-  super.onCreate(savedInstanceState);
-  bt = new KetaiBluetooth(this);
-  println("Creating KetaiBluetooth");
-}
-
-void onActivityResult(int requestCode, int resultCode, Intent data) {
-  bt.onActivityResult(requestCode, resultCode, data);
-}
-
-//********************************************************************
-
-
-//Call back method to manage data received
-void onBluetoothDataEvent(String who, byte[] data)
+void draw()
 {
   if (isConfiguring)
-    return;
-
-  //KetaiOSCMessage is the same as OscMessage
-  //   but allows construction by byte array
-  KetaiOSCMessage m = new KetaiOSCMessage(data);
-  if (m.isValid())
   {
-    if (m.checkAddrPattern("/remoteMouse/"))
+    ArrayList<String> names;
+    background(78, 93, 75);
+
+    //based on last key pressed lets display
+    //  appropriately
+    if (key == 'i')
+      info = getBluetoothInformation();
+    else
     {
-      if (m.checkTypetag("ii"))
+      if (key == 'p')
       {
-        
-        remoteMouse.x = m.get(0).intValue();
-        remoteMouse.y = m.get(1).intValue();
-        
+        info = "Paired Devices:\n";
+        names = bt.getPairedDeviceNames();
+      } else
+      {
+        info = "Discovered Devices:\n";
+        names = bt.getDiscoveredDeviceNames();
+      }
+
+      for (int i=0; i < names.size(); i++)
+      {
+        info += "["+i+"] "+names.get(i).toString() + "\n";
       }
     }
-    
-    else if(m.checkAddrPattern("/size/")){
-      
-      if(m.checkTypetag("ii")){
-        
-        if(otherSize.size() == 0){
-          
-          otherSize.add(m.get(0).intValue());
-          otherSize.add(m.get(1).intValue());
-          ratio.add(1.0*otherSize.get(0)/width);
-          ratio.add(1.0*otherSize.get(1)/height);
-          
-        }
-        
-        else{
-          
-          otherSize.set(0, m.get(0).intValue());
-          otherSize.set(1, m.get(1).intValue());
-          ratio.set(0, 1.0*otherSize.get(0)/width);
-          ratio.set(1, 1.0*otherSize.get(1)/height);
-          
-        }
-        
-        println(otherSize);
-        println(ratio);
-        
-      }
-    }
-  }
-}
-
-String getBluetoothInformation()
-{
-  String btInfo = "Server Running: ";
-  btInfo += bt.isStarted() + "\n";
-  btInfo += "Discovering: " + bt.isDiscovering() + "\n";
-  btInfo += "Device Discoverable: "+bt.isDiscoverable() + "\n";
-  btInfo += "\nConnected Devices: \n";
-
-  ArrayList<String> devices = bt.getConnectedDeviceNames();
-  for (String device : devices)
+    text(UIText + "\n\n" + info, 5, 90*displayDensity);
+  } else
   {
-    btInfo+= device+"\n";
+    background(78, 93, 75);
+    pushStyle();
+    fill(255);
+    ellipse(mouseX, mouseY, 20, 20);
+    fill(0, 255, 0);
+    stroke(0, 255, 0);
+    //ellipse(remoteMouse.x, remoteMouse.y, 20, 20);   
+    fill(0);
+    if(otherSize.size() > 0){
+      ellipse(remoteMouse.x/ratio.get(0), remoteMouse.y/ratio.get(1), 20, 20); 
+    
+      //ratio adjustment
+      /*x to width
+      if(ratio.get(0)*width > otherSize.get(0)){
+        
+        ratio.set(0, ratio.get(0) - 0.1);
+      }
+      else if(ratio.get(0)*width < otherSize.get(0)){
+        ratio.set(0, ratio.get(0) + 0.1);
+      }
+      //y to height
+      if(ratio.get(1)*height > otherSize.get(1)){
+        ratio.set(1, ratio.get(1) - 0.1);
+      }
+      else if(ratio.get(1)*height < otherSize.get(1)){
+        ratio.set(1, ratio.get(1) + 0.1);
+      }*/
+    }
+    popStyle();
   }
 
-  return btInfo;
+  drawUI();
 }
